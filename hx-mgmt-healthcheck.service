@@ -1,0 +1,31 @@
+#
+# Velostrata management Health-Check Service
+#
+
+[Unit]
+Description="Velostrata management Health-Check"
+After=tomcat8.service
+
+[Service]
+Type=forking
+Restart=always
+RestartSec=2
+TimeoutSec=15
+
+StandardOutput=null
+StandardError=null
+
+Environment=logsdir=/var/log/velostrata
+# Pre Start
+ExecStartPre=/bin/mkdir -p ${logsdir}
+
+ExecStartPre=/bin/sh -ec '/opt/velostrata/scripts/wait_for_proc_shutdown.sh 3 mgmt_internal_healthcheck.py mgmt_internal_healthcheck.py'
+
+# Start
+ExecStart=/bin/sh -ec '/opt/velostrata/scripts/mgmt_internal_healthcheck.py >> ${logsdir}/mgmt_healthcheck.log 2>&1 &'
+
+# Post Stop
+ExecStopPost=/bin/sh -ec '/opt/velostrata/scripts/wait_for_proc_shutdown.sh 3 mgmt_internal_healthcheck.py mgmt_internal_healthcheck.py'
+
+[Install]
+WantedBy=multi-user.target
